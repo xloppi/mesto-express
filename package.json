@@ -20,7 +20,10 @@
   },
   "homepage": "https://github.com/xloppi/mesto-express#readme",
   "dependencies": {
-    "express": "^4.17.2"
+    "celebrate": "^15.0.1",
+    "express": "^4.17.2",
+    "mongoose": "^6.2.0",
+    "validator": "^13.7.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.15"
