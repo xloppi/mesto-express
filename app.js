@@ -1,9 +1,9 @@
-import express from "express";
-import mongoose from "mongoose";
-import router from "./routes";
+const express = require('express');
+const mongoose = require('mongoose');
+const router = require('./routes/index');
 
 const PORT = 3003;
-const DB_URL = `mongodb+srv://user:dhvjekflgkts@cluster0.4mvfi.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`
+const DB_URL = 'mongodb://localhost:27017/mestodb';
 
 const app = express();
 

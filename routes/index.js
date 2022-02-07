@@ -1,11 +1,9 @@
-import { Router } from "express";
-import usersRouter from "./cards";
-import cardsRouter from "./cards";
+const router = require('express').Router();
+const usersRoutes = require('./users');
+const cardsRoutes = require('./cards');
 
-const router = new Router();
-
-router.use('/users', userRoutes);
-router.use('/cards', cardRoutes);
+router.use('/users', usersRoutes);
+router.use('/cards', cardsRoutes);
 //router.use('/', (req, res, next) => next(new NotFoundError('Запрашиваемый ресурс не найден')));
 
-export default router;
+module.exports = router;
