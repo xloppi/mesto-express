@@ -14,14 +14,33 @@ const getUsers = async (req, res, next) => {
 const createUser = async (req, res, next) => {
   try {
     const { name, about, avatar, email, password } = req.body;
-    const hash = bcrypt.hash(password, 10);
-    const user = await User.findOne({ email })
+    const hash = await bcrypt.hash(password, 10);
+    const existingUser = await User.findOne({ email });
 
-    if (user) {
-
+    if (existingUser) {
+      return next(new ConflictingError("Такой пользователь уже существует"));
     }
-  } catch (e) {
-    throw new ConflictingError('Такой пользователь уже существует');
+
+    const newUser = await User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
+    });
+
+    const user = newUser.toObject();
+    delete user.password;
+    res.status(201).send(user);
+  } catch (err) {
+    if (err.name === "ValidationError" || err.name === "CastError") {
+      return next(
+        new ValidationError(
+          "Переданы некорректные данные при создании пользователя"
+        )
+      );
+    }
+    return next(err);
   }
 };
 
@@ -65,4 +84,5 @@ const createUser = async (req, res, next) => {
 
 module.exports = {
   getUsers,
+  createUser,
 };
