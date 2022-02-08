@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const {errors} = require('celebrate');
 const router = require('./routes/index');
+const errorHandler = require('./middlewares/error-handler');
 
 const PORT = 3003;
 const DB_URL = 'mongodb://localhost:27017/mestodb';
@@ -9,11 +11,6 @@ const app = express();
 
 app.use(express.json())
 app.use(router);
-
-app.post('/', (req, res) => {
-  console.log(req.body);
-  res.status(200).json('сервер все еще работает');
-})
 
 const start = async () => {
   try {
@@ -25,5 +22,8 @@ const start = async () => {
     console.log(e);
   }
 }
+
+app.use(errors());
+app.use(errorHandler);
 
 start();
