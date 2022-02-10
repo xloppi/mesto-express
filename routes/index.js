@@ -1,11 +1,12 @@
 const router = require('express').Router();
 const usersRoutes = require('./users');
 const cardsRoutes = require('./cards');
+const NotFoundError = require('../errors/not-found-err')
 const { celebrate, Joi } = require('celebrate');
 const { isURL, isEmail } = require('validator');
-const { createUser } =require('./controllers/users');
+const { createUser, login } =require('../controllers/users');
 
-app.post('/signin', celebrate({
+router.post('/signin', celebrate({
   body: Joi.object().keys({
     email: Joi
       .string()
@@ -20,7 +21,7 @@ app.post('/signin', celebrate({
   }),
 }), login);
 
-app.post('/signup', celebrate({
+router.post('/signup', celebrate({
   body: Joi.object().keys({
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
@@ -37,6 +38,6 @@ app.post('/signup', celebrate({
 
 router.use('/users', usersRoutes);
 router.use('/cards', cardsRoutes);
-//router.use('/', (req, res, next) => next(new NotFoundError('Запрашиваемый ресурс не найден')));
+router.use('/', (req, res, next) => next(new NotFoundError('Запрашиваемый ресурс не найден')));
 
 module.exports = router;

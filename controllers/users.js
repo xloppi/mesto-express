@@ -1,8 +1,9 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
-const ValidationError = require('../errors/validation-err.js');
-const ConflictingError = require('../errors/conflicting-request-err');
+const ValidationError = require("../errors/validation-err.js");
+const ConflictingError = require("../errors/conflicting-request-err");
+const AuthError = require("../errors/auth-err");
 
 const getUsers = async (req, res, next) => {
   try {
@@ -35,7 +36,7 @@ const createUser = async (req, res, next) => {
     delete user.password;
     res.status(201).send(user);
   } catch (err) {
-    console.log(123)
+    console.log(123);
     if (err.name === "ValidationError" || err.name === "CastError") {
       return next(
         new ValidationError(
@@ -50,10 +51,36 @@ const createUser = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    const user = await User.findOne({ email }).select("+password");
+
+    if (!user) {
+      throw next(new AuthError("Не правильная почта или пароль"));
+    }
+
+    const validPassword = await bcrypt.compare(password, user.password);
+
+    if (!validPassword) {
+      throw next(new AuthError("Не правильная почта или пароль"));
+    }
+
+    const token = jwt.sign(
+      { _id: user._id },
+      "superpupernikogdanepodbereshkey",
+      { expiresIn: "7d" }
+    );
+
+    return res
+      .cookie("jwt", token, {
+        maxAge: 3600000 * 24 * 7,
+        httpOnly: true,
+        SameSite: "None",
+        // secure: NODE_ENV === "production",
+      })
+      .send({ message: 'Авторизация прошла успешно' });
   } catch (err) {
     next();
   }
-}
+};
 
 // const login = (req, res, next) => {
 //   const { email, password } = req.body;
@@ -94,4 +121,5 @@ const login = async (req, res, next) => {
 module.exports = {
   getUsers,
   createUser,
+  login,
 };
