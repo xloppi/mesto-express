@@ -1,4 +1,3 @@
-
 class ConflictingError extends Error {
   constructor(message) {
     super(message);
