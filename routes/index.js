@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const usersRoutes = require('./users');
 const cardsRoutes = require('./cards');
+const auth = require('../middlewares/auth');
 const NotFoundError = require('../errors/not-found-err')
 const { celebrate, Joi } = require('celebrate');
 const { isURL, isEmail } = require('validator');
@@ -35,6 +36,8 @@ router.post('/signup', celebrate({
     password: Joi.string(),
   }),
 }), createUser);
+
+router.use(auth);
 
 router.use('/users', usersRoutes);
 router.use('/cards', cardsRoutes);

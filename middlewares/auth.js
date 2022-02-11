@@ -3,19 +3,19 @@ const AuthError = require('../errors/auth-err');
 
 const { JWT_SECRET_KEY } = require('../utils/conf');
 
-const { AUTH_ERR } = require('../utils/const_messages');
+const { AUTH_ERR } = require('../utils/const_messages.js');
 
 module.exports = (req, res, next) => {
-  const { authorization } = req.headers;
+  const cookie = req.cookies.jwt;
 
-  if (!authorization || !authorization.startsWith('Bearer ')) {
+  if (!cookie) {
     return next(new AuthError(AUTH_ERR));
   }
-  const token = authorization.replace('Bearer ', '');
+
   let payload;
 
   try {
-    payload = jwt.verify(token, JWT_SECRET_KEY);
+    payload = jwt.verify(cookie, JWT_SECRET_KEY);
   } catch (err) {
     return next(new AuthError(AUTH_ERR));
   }

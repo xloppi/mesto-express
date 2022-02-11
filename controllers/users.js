@@ -4,11 +4,34 @@ const User = require("../models/user");
 const ValidationError = require("../errors/validation-err.js");
 const ConflictingError = require("../errors/conflicting-request-err");
 const AuthError = require("../errors/auth-err");
+const { NODE_ENV, JWT_SECRET_KEY, SALT_R } = require('../utils/conf');
+const {
+  USER_NOT_FOUND,
+  INVALID_UPDATE_PROFILE,
+  USER_ALREADY_EX,
+  INVALID_DATA_USER,
+  LOGIN_NOT_SUCCESS,
+  LOGOUT_SUCCESS,
+} = require("../utils/const_messages");
 
 const getUsers = async (req, res, next) => {
   try {
     const users = await User.find({});
     return res.status(200).send(users);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getMe = async (req, res, next) => {
+  try {
+    const currentUser = await User.findById(req.user._id);
+
+    if (currentUser) {
+      res.status(200).send(currentUser);
+    } else {
+      return next(new NotFoundError(USER_NOT_FOUND));
+    }
   } catch (err) {
     next(err);
   }
@@ -36,7 +59,6 @@ const createUser = async (req, res, next) => {
     delete user.password;
     res.status(201).send(user);
   } catch (err) {
-    console.log(123);
     if (err.name === "ValidationError" || err.name === "CastError") {
       return next(
         new ValidationError(
@@ -44,7 +66,7 @@ const createUser = async (req, res, next) => {
         )
       );
     }
-    return next(err);
+    next(err);
   }
 };
 
@@ -54,13 +76,13 @@ const login = async (req, res, next) => {
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
-      throw next(new AuthError("Не правильная почта или пароль"));
+      return next(new AuthError("Не правильная почта или пароль"));
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
 
     if (!validPassword) {
-      throw next(new AuthError("Не правильная почта или пароль"));
+      return next(new AuthError("Не правильная почта или пароль"));
     }
 
     const token = jwt.sign(
@@ -74,52 +96,69 @@ const login = async (req, res, next) => {
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
         SameSite: "None",
-        // secure: NODE_ENV === "production",
+        secure: NODE_ENV === "production",
       })
-      .send({ message: 'Авторизация прошла успешно' });
+      .send({ message: "Авторизация прошла успешно" });
   } catch (err) {
-    next();
+    next(err);
   }
 };
 
-// const login = (req, res, next) => {
-//   const { email, password } = req.body;
+const updateProfile = async (req, res, next) => {
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { name: req.body.name, about: req.body.about },
+      { new: true, runValidators: true }
+    );
 
-//   return User.findOne({ email }).select('+password')
-//     .then((user) => {
-//       if (!user) {
-//         throw next(new AuthError('Не правильная почта или пароль'));
-//       }
+    if (!updatedUser) {
+      return next(new NotFoundError("Пользователь с указанным _id не найден"));
+    }
 
-//       return bcrypt.compare(
-//         password,
-//         user.password,
-//         (error, isValid) => {
-//           if (!isValid) {
-//             throw next(new AuthError('Не правильная почта или пароль'));
-//           }
+    return res.status(200).send(updatedUser);
+  } catch (err) {
+    if (err.name === "ValidationError" || err.name === "CastError") {
+      return next(
+        new ValidationError(
+          "Переданы некорректные данные при обновлении профиля"
+        )
+      );
+    }
+    next(err);
+  }
+};
 
-//           const token = jwt.sign(
-//             { _id: user._id },
-//             NODE_ENV === 'production' ? JWT_SECRET : 'superpupernikogdanepodbereshkey',
-//             { expiresIn: '7d' },
-//           );
-//           return res
-//             .cookie('jwt', token, {
-//               maxAge: 3600000 * 24 * 7,
-//               httpOnly: true,
-//               SameSite: 'None',
-//               secure: true,
-//             })
-//             .send({ message: 'Авторизация прошла успешно' });
-//         },
-//       );
-//     })
-//     .catch(next);
-// };
+const updateAvatar = async (req, res, next) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { avatar: req.body.avatar },
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return next(new NotFoundError(USER_NOT_FOUND));
+    }
+
+    res.status(200).send(user);
+  } catch (err) {
+    if (err.name === "ValidationError") {
+      return next(
+        new ValidationError(
+          "Переданы некорректные данные при обновлении аватара"
+        )
+      );
+    }
+    next(err);
+  }
+};
 
 module.exports = {
   getUsers,
   createUser,
   login,
+  updateProfile,
+  updateAvatar,
+  getMe,
 };
