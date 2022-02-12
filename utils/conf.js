@@ -8,8 +8,8 @@ const {
   SALT_ROUNDS,
 } = process.env;
 
-const ENV_PORT = NODE_ENV === 'production' ? PORT : 3000;
-const MONGO_DB_URL = NODE_ENV === 'production' ? MONGO_URL : 'mongodb://localhost:27017/bitfilmsdb';
+const ENV_PORT = NODE_ENV === 'production' ? PORT : 3003;
+const MONGO_DB_URL = NODE_ENV === 'production' ? MONGO_URL : 'mongodb://localhost:27017/mestodb';
 const MONGO_DB_CONFIG = {
   useUnifiedTopology: true,
   useNewUrlParser: true,

@@ -5,7 +5,7 @@ const auth = require('../middlewares/auth');
 const NotFoundError = require('../errors/not-found-err')
 const { celebrate, Joi } = require('celebrate');
 const { isURL, isEmail } = require('validator');
-const { createUser, login } =require('../controllers/users');
+const { createUser, login, logout } =require('../controllers/users');
 
 router.post('/signin', celebrate({
   body: Joi.object().keys({
@@ -38,6 +38,8 @@ router.post('/signup', celebrate({
 }), createUser);
 
 router.use(auth);
+
+router.post('/signout', logout);
 
 router.use('/users', usersRoutes);
 router.use('/cards', cardsRoutes);

@@ -11,6 +11,7 @@ const {
   USER_ALREADY_EX,
   INVALID_DATA_USER,
   LOGIN_NOT_SUCCESS,
+  LOGIN_SUCCESS,
   LOGOUT_SUCCESS,
 } = require("../utils/const_messages");
 
@@ -40,11 +41,11 @@ const getMe = async (req, res, next) => {
 const createUser = async (req, res, next) => {
   try {
     const { name, about, avatar, email, password } = req.body;
-    const hash = await bcrypt.hash(password, 10);
+    const hash = await bcrypt.hash(password, SALT_R);
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
-      return next(new ConflictingError("Такой пользователь уже существует"));
+      return next(new ConflictingError(USER_ALREADY_EX));
     }
 
     const newUser = await User.create({
@@ -61,9 +62,7 @@ const createUser = async (req, res, next) => {
   } catch (err) {
     if (err.name === "ValidationError" || err.name === "CastError") {
       return next(
-        new ValidationError(
-          "Переданы некорректные данные при создании пользователя"
-        )
+        new ValidationError(INVALID_DATA_USER)
       );
     }
     next(err);
@@ -76,18 +75,18 @@ const login = async (req, res, next) => {
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
-      return next(new AuthError("Не правильная почта или пароль"));
+      return next(new AuthError(LOGIN_NOT_SUCCESS));
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
 
     if (!validPassword) {
-      return next(new AuthError("Не правильная почта или пароль"));
+      return next(new AuthError(LOGIN_NOT_SUCCESS));
     }
 
     const token = jwt.sign(
       { _id: user._id },
-      "superpupernikogdanepodbereshkey",
+      JWT_SECRET_KEY,
       { expiresIn: "7d" }
     );
 
@@ -98,7 +97,7 @@ const login = async (req, res, next) => {
         SameSite: "None",
         secure: NODE_ENV === "production",
       })
-      .send({ message: "Авторизация прошла успешно" });
+      .send({ message: LOGIN_SUCCESS });
   } catch (err) {
     next(err);
   }
@@ -113,16 +112,14 @@ const updateProfile = async (req, res, next) => {
     );
 
     if (!updatedUser) {
-      return next(new NotFoundError("Пользователь с указанным _id не найден"));
+      return next(new NotFoundError(USER_NOT_FOUND));
     }
 
     return res.status(200).send(updatedUser);
   } catch (err) {
     if (err.name === "ValidationError" || err.name === "CastError") {
       return next(
-        new ValidationError(
-          "Переданы некорректные данные при обновлении профиля"
-        )
+        new ValidationError(INVALID_UPDATE_PROFILE)
       );
     }
     next(err);
@@ -145,19 +142,20 @@ const updateAvatar = async (req, res, next) => {
   } catch (err) {
     if (err.name === "ValidationError") {
       return next(
-        new ValidationError(
-          "Переданы некорректные данные при обновлении аватара"
-        )
+        new ValidationError(INVALID_UPDATE_PROFILE)
       );
     }
     next(err);
   }
 };
 
+const logout = (req, res) => res.clearCookie('jwt').send({ message: LOGOUT_SUCCESS });
+
 module.exports = {
   getUsers,
   createUser,
   login,
+  logout,
   updateProfile,
   updateAvatar,
   getMe,
