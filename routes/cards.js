@@ -7,7 +7,7 @@ const {
   createCard,
   deleteCard,
   likeCard,
-  // dislikeCard,
+  dislikeCard,
 } = require('../controllers/cards');
 
 cardsRouter.get('/', getCards);
@@ -32,10 +32,10 @@ cardsRouter.put('/:cardId/likes', celebrate({
     cardId: Joi.string().hex().length(24),
   }),
 }), likeCard);
-// cardsRouter.delete('/:cardId/likes', celebrate({
-//   params: Joi.object().keys({
-//     cardId: Joi.string().hex().length(24),
-//   }),
-// }), dislikeCard);
+cardsRouter.delete('/:cardId/likes', celebrate({
+  params: Joi.object().keys({
+    cardId: Joi.string().hex().length(24),
+  }),
+}), dislikeCard);
 
 module.exports = cardsRouter;

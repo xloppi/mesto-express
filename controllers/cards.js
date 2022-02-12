@@ -1,7 +1,7 @@
 const Card = require("../models/card");
 const ValidationError = require("../errors/validation-err.js");
 const NotFoundError = require("../errors/not-found-err.js");
-const ForbiddenError = require("../errors/forbidden-err.js")
+const ForbiddenError = require("../errors/forbidden-err.js");
 
 const getCards = async (req, res, next) => {
   try {
@@ -40,7 +40,9 @@ const deleteCard = async (req, res, next) => {
     }
 
     if (userId !== card.owner.toString()) {
-      return next(new ForbiddenError("Пользователь не является владельцем карточки"));
+      return next(
+        new ForbiddenError("Пользователь не является владельцем карточки")
+      );
     }
 
     await Card.deleteOne({ _id: req.params.cardId });
@@ -55,16 +57,54 @@ const deleteCard = async (req, res, next) => {
 
 const likeCard = async (req, res, next) => {
   try {
+    const card = await Card.findByIdAndUpdate(
+      req.params.cardId,
+      { $addToSet: { likes: req.user._id } },
+      { new: true }
+    );
 
+    if (card) {
+      return res.status(200).send(card);
+    } else {
+      return next(new NotFoundError("Карточка с указанным _id не найдена"));
+    }
   } catch (err) {
-
+    if (err.name === "CastError") {
+      return next(
+        new ValidationError("Переданы некорректные данные для постановки лайка")
+      );
+    }
+    return next(err);
   }
-}
+};
 
-// const likeCard = (req, res, next) => {
+const dislikeCard = async (req, res, next) => {
+  try {
+    const card = await Card.findByIdAndUpdate(
+      req.params.cardId,
+      { $pull: { likes: req.user._id } },
+      { new: true }
+    );
+
+    if (card) {
+      return res.status(200).send(card);
+    } else {
+      return next(new NotFoundError("Карточка с указанным _id не найдена"));
+    }
+  } catch (err) {
+    if (err.name === "CastError") {
+      return next(
+        new ValidationError("Переданы некорректные данные для снятии лайка")
+      );
+    }
+    return next(err);
+  }
+};
+
+// const dislikeCard = (req, res, next) => {
 //   Card.findByIdAndUpdate(
 //     req.params.cardId,
-//     { $addToSet: { likes: req.user._id } },
+//     { $pull: { likes: req.user._id } },
 //     { new: true },
 //   )
 //     .then((card) => {
@@ -76,7 +116,7 @@ const likeCard = async (req, res, next) => {
 //     })
 //     .catch((err) => {
 //       if (err.name === 'CastError') {
-//         return next(new ValidationError('Переданы некорректные данные для постановки лайка'));
+//         return next(new ValidationError('Переданы некорректные данные для снятии лайка'));
 //       }
 //       return next(err);
 //     });
@@ -86,5 +126,6 @@ module.exports = {
   getCards,
   createCard,
   deleteCard,
-
+  likeCard,
+  dislikeCard,
 };
