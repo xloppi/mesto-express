@@ -96,7 +96,7 @@ const login = async (req, res, next) => {
         httpOnly: true,
         SameSite: "None",
         secure: false,
-        // secure: NODE_ENV === "production",
+        secure: NODE_ENV === "production",
       })
       .send({ message: LOGIN_SUCCESS });
   } catch (err) {
