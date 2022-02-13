@@ -95,7 +95,8 @@ const login = async (req, res, next) => {
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
         SameSite: "None",
-        secure: NODE_ENV === "production",
+        secure: false,
+        // secure: NODE_ENV === "production",
       })
       .send({ message: LOGIN_SUCCESS });
   } catch (err) {
