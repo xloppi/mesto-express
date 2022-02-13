@@ -9,7 +9,7 @@ module.exports = (req, res, next) => {
   const cookie = req.cookies.jwt;
 
   if (!cookie) {
-    return next(new AuthError(AUTH_ERR));
+    return next(new AuthError("1"));
   }
 
   let payload;
@@ -17,7 +17,7 @@ module.exports = (req, res, next) => {
   try {
     payload = jwt.verify(cookie, JWT_SECRET_KEY);
   } catch (err) {
-    return next(new AuthError(AUTH_ERR));
+    return next(new AuthError("2"));
   }
 
   req.user = payload;
